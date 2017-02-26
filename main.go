@@ -2,15 +2,40 @@ package main
 
 import (
 	"fmt"
-	"go/importer"
+	"go/types"
+
+	"golang.org/x/tools/go/loader"
 )
 
+func handleFunc(f *types.Func) {
+	fmt.Println("func", f)
+}
+
 func main() {
-	imp := importer.Default()
-	hello, err := imp.Import("github.com/kragniz/proxy/pkg")
+	var conf loader.Config
+	conf.Import("github.com/kragniz/testpkg")
+	prog, err := conf.Load()
 	if err != nil {
-		fmt.Println("you done fucked up:", err)
+		fmt.Println(err)
 	}
-	pkgScope := hello.Scope()
-	fmt.Println(pkgScope)
+	fmt.Println(prog)
+
+	for pkg, _ := range prog.AllPackages {
+		scope := pkg.Scope()
+		fmt.Println(scope)
+
+		for _, elem := range scope.Names() {
+			obj := scope.Lookup(elem)
+			switch obj.(type) {
+
+			case *types.Func:
+				handleFunc(obj.(*types.Func))
+			case *types.Var:
+				fmt.Println("var", obj.Name(), obj.Type())
+			default:
+				fmt.Println("not sure what it is", obj)
+			}
+
+		}
+	}
 }
