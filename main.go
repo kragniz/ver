@@ -1,18 +1,27 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/types"
 
 	"golang.org/x/tools/go/loader"
 )
 
-func handleFunc(f *types.Func) {
-	fmt.Println("Func:", f.Name())
+type Item struct {
+	Type string
 }
 
-func handleVar(v *types.Var) {
+func handleFunc(f *types.Func) Item {
+	fmt.Println("Func:", f.Name())
+	item := Item{Type: "Func"}
+	return item
+}
+
+func handleVar(v *types.Var) Item {
 	fmt.Println("Var:", v.Name(), v.Type())
+	item := Item{Type: "Var"}
+	return item
 }
 
 func handleConst(c *types.Const) {
@@ -30,7 +39,7 @@ func handleTypeName(t *types.TypeName) {
 			handleVar(v)
 		}
 	default:
-		fmt.Println("dunno")
+		fmt.Println("Warning: TypeName", t.Type().Underlying(), "is not implemented")
 	}
 }
 
@@ -47,6 +56,8 @@ func main() {
 		scope := pkg.Scope()
 		fmt.Println(scope)
 
+		items := make(map[string]Item)
+
 		for _, elem := range scope.Names() {
 			obj := scope.Lookup(elem)
 			switch obj.(type) {
@@ -61,7 +72,7 @@ func main() {
 			  | *Nil          // predeclared nil */
 
 			case *types.Func:
-				handleFunc(obj.(*types.Func))
+				items[obj.Name()] = handleFunc(obj.(*types.Func))
 			case *types.Var:
 				handleVar(obj.(*types.Var))
 			case *types.Const:
@@ -77,5 +88,10 @@ func main() {
 			}
 
 		}
+		b, err := json.MarshalIndent(items, "", "  ")
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(string(b))
 	}
 }
