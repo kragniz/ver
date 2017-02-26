@@ -4,23 +4,37 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/types"
+	"strings"
 
 	"golang.org/x/tools/go/loader"
 )
 
 type Item struct {
-	Type string
+	ObjectType string
+	Type       string
+	Func       Func
+}
+
+type Func struct {
+	ParamTypes []string
 }
 
 func handleFunc(f *types.Func) Item {
 	fmt.Println("Func:", f.Name())
-	item := Item{Type: "Func"}
+
+	sig := f.Type().(*types.Signature)
+	params := []string{}
+	for i := 0; i < sig.Params().Len(); i++ {
+		t := strings.Split(sig.Params().At(i).String(), " ")
+		params = append(params, t[len(t)-1])
+	}
+	item := Item{ObjectType: "Func", Func: Func{ParamTypes: params}}
 	return item
 }
 
 func handleVar(v *types.Var) Item {
 	fmt.Println("Var:", v.Name(), v.Type())
-	item := Item{Type: "Var"}
+	item := Item{ObjectType: "Var", Type: v.Type().String()}
 	return item
 }
 
@@ -61,20 +75,10 @@ func main() {
 		for _, elem := range scope.Names() {
 			obj := scope.Lookup(elem)
 			switch obj.(type) {
-
-			/*Object = *Func  // function, concrete method, or abstract method
-			  | *Var          // variable, parameter, result, or struct field
-			  | *Const        // constant
-			  | *TypeName     // type name
-			  | *Label        // statement label
-			  | *PkgName      // package name, e.g. json after import "encoding/json"
-			  | *Builtin      // predeclared function such as append or len
-			  | *Nil          // predeclared nil */
-
 			case *types.Func:
 				items[obj.Name()] = handleFunc(obj.(*types.Func))
 			case *types.Var:
-				handleVar(obj.(*types.Var))
+				items[obj.Name()] = handleVar(obj.(*types.Var))
 			case *types.Const:
 				handleConst(obj.(*types.Const))
 			case *types.TypeName:
@@ -86,7 +90,6 @@ func main() {
 			default:
 				fmt.Println("not sure what it is", obj)
 			}
-
 		}
 		b, err := json.MarshalIndent(items, "", "  ")
 		if err != nil {
