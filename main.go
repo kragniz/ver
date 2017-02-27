@@ -16,19 +16,33 @@ type Item struct {
 }
 
 type Func struct {
-	ParamTypes []string `json:",omitempty"`
+	ArgTypes []string `json:",omitempty"`
+	ResTypes []string `json:",omitempty"`
+}
+
+func typeTupleToSlice(types *types.Tuple) []string {
+	l := []string{}
+	for i := 0; i < types.Len(); i++ {
+		t := strings.Split(types.At(i).String(), " ")
+		l = append(l, t[len(t)-1])
+	}
+	return l
 }
 
 func handleFunc(f *types.Func) Item {
 	fmt.Println("Func:", f.Name())
 
 	sig := f.Type().(*types.Signature)
-	params := []string{}
-	for i := 0; i < sig.Params().Len(); i++ {
-		t := strings.Split(sig.Params().At(i).String(), " ")
-		params = append(params, t[len(t)-1])
+	args := typeTupleToSlice(sig.Params())
+	res := typeTupleToSlice(sig.Results())
+
+	item := Item{
+		ObjectType: "Func",
+		Func: Func{
+			ArgTypes: args,
+			ResTypes: res,
+		},
 	}
-	item := Item{ObjectType: "Func", Func: Func{ParamTypes: params}}
 	return item
 }
 
