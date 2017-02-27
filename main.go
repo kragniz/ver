@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/types"
+	"os"
 	"strings"
 
 	"golang.org/x/tools/go/loader"
@@ -113,6 +114,13 @@ func main() {
 
 		for _, elem := range scope.Names() {
 			obj := scope.Lookup(elem)
+
+			if len(os.Args) > 1 {
+				if obj.Name() != os.Args[1] {
+					continue
+				}
+			}
+
 			switch obj.(type) {
 			case *types.Func:
 				items[obj.Name()] = handleFunc(obj.(*types.Func))
