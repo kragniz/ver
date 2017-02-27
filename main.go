@@ -13,11 +13,18 @@ type Item struct {
 	ObjectType string
 	Type       string
 	Func       Func
+	Struct     Struct
 }
 
 type Func struct {
 	ArgTypes []string `json:",omitempty"`
 	ResTypes []string `json:",omitempty"`
+	Variadic bool     `json:",omitempty"`
+}
+
+type Struct struct {
+	Methods []Item `json:",omitempty"`
+	Fields  []Item `json:",omitempty"`
 }
 
 func typeTupleToSlice(types *types.Tuple) []string {
@@ -41,6 +48,7 @@ func handleFunc(f *types.Func) Item {
 		Func: Func{
 			ArgTypes: args,
 			ResTypes: res,
+			Variadic: sig.Variadic(),
 		},
 	}
 	return item
@@ -56,19 +64,36 @@ func handleConst(c *types.Const) {
 	fmt.Println("Const:", c.Name())
 }
 
-func handleTypeName(t *types.TypeName) {
+func handleStruct(t *types.TypeName) Item {
+	fields := []Item{}
+
+	s := t.Type().Underlying().(*types.Struct)
+	for i := 0; i < s.NumFields(); i++ {
+		v := s.Field(i)
+		fields = append(fields, handleVar(v))
+	}
+	return Item{
+		ObjectType: "Struct",
+		Type:       t.Type().String(),
+		Struct: Struct{
+			Fields: fields,
+		},
+	}
+}
+
+func handleTypeName(t *types.TypeName) Item {
 	fmt.Println("TypeName:", t.Name(), t.Type())
+
+	var item Item
+
 	switch t.Type().Underlying().(type) {
 	case *types.Struct:
-		fmt.Println("Struct!", t)
-		s := t.Type().Underlying().(*types.Struct)
-		for i := 0; i < s.NumFields(); i++ {
-			v := s.Field(i)
-			handleVar(v)
-		}
+		item = handleStruct(t)
 	default:
 		fmt.Println("Warning: TypeName", t.Type().Underlying(), "is not implemented")
 	}
+
+	return item
 }
 
 func main() {
@@ -96,7 +121,7 @@ func main() {
 			case *types.Const:
 				handleConst(obj.(*types.Const))
 			case *types.TypeName:
-				handleTypeName(obj.(*types.TypeName))
+				items[obj.Name()] = handleTypeName(obj.(*types.TypeName))
 			case *types.Label, *types.PkgName, *types.Builtin, *types.Nil:
 				// unimplemented
 				fmt.Println("Warning,", obj.Type(), "is unimplemented")
