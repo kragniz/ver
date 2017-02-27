@@ -16,7 +16,7 @@ type Item struct {
 }
 
 type Func struct {
-	ParamTypes []string
+	ParamTypes []string `json:",omitempty"`
 }
 
 func handleFunc(f *types.Func) Item {
