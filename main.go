@@ -25,8 +25,8 @@ type Func struct {
 }
 
 type Struct struct {
-	Methods []Item `json:",omitempty"`
-	Fields  []Item `json:",omitempty"`
+	Methods map[string]Item `json:",omitempty"`
+	Fields  []Item          `json:",omitempty"`
 }
 
 func typeTupleToSlice(types *types.Tuple) []string {
@@ -83,9 +83,10 @@ func handleStruct(t *types.TypeName) Item {
 
 	mset := types.NewMethodSet(t.Type())
 
-	methods := []Item{}
+	methods := make(map[string]Item)
 	for i := 0; i < mset.Len(); i++ {
-		methods = append(methods, handleFunc(mset.At(i).Obj().(*types.Func)))
+		f := mset.At(i).Obj().(*types.Func)
+		methods[f.Name()] = handleFunc(f)
 	}
 	return Item{
 		ObjectType: "Struct",
