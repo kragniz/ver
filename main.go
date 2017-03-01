@@ -122,51 +122,57 @@ func handleTypeName(t *types.TypeName) Item {
 	return item
 }
 
-func main() {
+func getPkgInfo(name string) map[string]Item {
 	var conf loader.Config
-	conf.Import("github.com/kragniz/testpkg")
+	conf.Import(name)
+	//conf.Import("github.com/barrucadu/logdb")
 	prog, err := conf.Load()
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(prog)
+	pkg := prog.Package(name).Pkg
 
-	for pkg, _ := range prog.AllPackages {
-		scope := pkg.Scope()
-		fmt.Println(scope)
+	scope := pkg.Scope()
+	fmt.Println(scope)
 
-		items := make(map[string]Item)
+	items := make(map[string]Item)
 
-		for _, elem := range scope.Names() {
-			obj := scope.Lookup(elem)
+	for _, elem := range scope.Names() {
+		obj := scope.Lookup(elem)
 
-			if len(os.Args) > 1 {
-				if obj.Name() != os.Args[1] {
-					continue
-				}
-			}
-
-			switch obj.(type) {
-			case *types.Func:
-				items[obj.Name()] = handleFunc(obj.(*types.Func))
-			case *types.Var:
-				items[obj.Name()] = handleVar(obj.(*types.Var))
-			case *types.Const:
-				handleConst(obj.(*types.Const))
-			case *types.TypeName:
-				items[obj.Name()] = handleTypeName(obj.(*types.TypeName))
-			case *types.Label, *types.PkgName, *types.Builtin, *types.Nil:
-				// unimplemented
-				fmt.Println("Warning,", obj.Type(), "is unimplemented")
+		if len(os.Args) > 1 {
+			if obj.Name() != os.Args[1] {
 				continue
-			default:
-				fmt.Println("not sure what it is", obj)
 			}
 		}
-		b, err := json.MarshalIndent(items, "", "  ")
-		if err != nil {
-			fmt.Println(err)
+
+		switch obj.(type) {
+		case *types.Func:
+			items[obj.Name()] = handleFunc(obj.(*types.Func))
+		case *types.Var:
+			items[obj.Name()] = handleVar(obj.(*types.Var))
+		case *types.Const:
+			handleConst(obj.(*types.Const))
+		case *types.TypeName:
+			items[obj.Name()] = handleTypeName(obj.(*types.TypeName))
+		case *types.Label, *types.PkgName, *types.Builtin, *types.Nil:
+			// unimplemented
+			fmt.Println("Warning,", obj.Type(), "is unimplemented")
+			continue
+		default:
+			fmt.Println("not sure what it is", obj)
 		}
-		fmt.Println(string(b))
 	}
+
+	return items
+}
+
+func main() {
+	inf := getPkgInfo("github.com/kragniz/testpkg2")
+	b, err := json.MarshalIndent(inf, "", "  ")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(b))
 }
