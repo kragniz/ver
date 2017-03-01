@@ -98,6 +98,13 @@ func handleStruct(t *types.TypeName) Item {
 	}
 }
 
+func handleInterface(t *types.TypeName) Item {
+	i := t.Type().Underlying().(*types.Interface)
+	fmt.Println(i)
+
+	return Item{ObjectType: "Interface"}
+}
+
 func handleTypeName(t *types.TypeName) Item {
 	fmt.Println("TypeName:", t.Name(), t.Type())
 
@@ -106,6 +113,8 @@ func handleTypeName(t *types.TypeName) Item {
 	switch t.Type().Underlying().(type) {
 	case *types.Struct:
 		item = handleStruct(t)
+	case *types.Interface:
+		item = handleInterface(t)
 	default:
 		fmt.Println("Warning: TypeName", t.Type().Underlying(), "is not implemented")
 	}
