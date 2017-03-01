@@ -21,6 +21,7 @@ type Func struct {
 	ArgTypes []string `json:",omitempty"`
 	ResTypes []string `json:",omitempty"`
 	Variadic bool     `json:",omitempty"`
+	Recv     string   `json:",omitempty"`
 }
 
 type Struct struct {
@@ -44,12 +45,18 @@ func handleFunc(f *types.Func) Item {
 	args := typeTupleToSlice(sig.Params())
 	res := typeTupleToSlice(sig.Results())
 
+	var recv string
+	if r := sig.Recv(); r != nil {
+		recv = r.Type().String()
+	}
+
 	item := Item{
 		ObjectType: "Func",
 		Func: Func{
 			ArgTypes: args,
 			ResTypes: res,
 			Variadic: sig.Variadic(),
+			Recv:     recv,
 		},
 	}
 	return item
@@ -66,18 +73,26 @@ func handleConst(c *types.Const) {
 }
 
 func handleStruct(t *types.TypeName) Item {
-	fields := []Item{}
-
 	s := t.Type().Underlying().(*types.Struct)
+
+	fields := []Item{}
 	for i := 0; i < s.NumFields(); i++ {
 		v := s.Field(i)
 		fields = append(fields, handleVar(v))
+	}
+
+	mset := types.NewMethodSet(t.Type())
+
+	methods := []Item{}
+	for i := 0; i < mset.Len(); i++ {
+		methods = append(methods, handleFunc(mset.At(i).Obj().(*types.Func)))
 	}
 	return Item{
 		ObjectType: "Struct",
 		Type:       t.Type().String(),
 		Struct: Struct{
-			Fields: fields,
+			Fields:  fields,
+			Methods: methods,
 		},
 	}
 }
