@@ -4,11 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/types"
+	"io/ioutil"
 	"os"
 	"strings"
 
 	"golang.org/x/tools/go/loader"
 )
+
+type VerFile struct {
+	Items map[string]Item
+}
 
 type Item struct {
 	ObjectType string
@@ -169,8 +174,20 @@ func getPkgInfo(name string) map[string]Item {
 }
 
 func main() {
-	inf := getPkgInfo("github.com/kragniz/testpkg2")
-	b, err := json.MarshalIndent(inf, "", "  ")
+	file, err := ioutil.ReadFile("v1.json")
+	if err != nil {
+		fmt.Printf("File error: %v\n", err)
+		os.Exit(1)
+	}
+
+	var verFile VerFile
+	json.Unmarshal(file, &verFile)
+	fmt.Println(verFile.Items)
+
+	items := getPkgInfo("github.com/kragniz/testpkg2")
+
+	newVerFile := VerFile{Items: items}
+	b, err := json.MarshalIndent(newVerFile, "", "  ")
 	if err != nil {
 		fmt.Println(err)
 	}
