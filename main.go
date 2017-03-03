@@ -222,6 +222,14 @@ func (a *Func) diff(b Func) RequiredBump {
 	return Patch
 }
 
+func (a *Item) varDiff(b Item) RequiredBump {
+	if a.Type != b.Type {
+		return Major
+	}
+
+	return Patch
+}
+
 func (a *Struct) diff(b Struct) RequiredBump {
 	return Patch
 }
