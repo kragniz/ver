@@ -6,7 +6,6 @@ import (
 	"go/types"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"strings"
 
 	"golang.org/x/tools/go/loader"
@@ -180,13 +179,27 @@ func GetPkgInfo(name string) map[string]Item {
 }
 
 func (a *Func) equal(b Func) bool {
-	if reflect.DeepEqual(a.ArgTypes, b.ArgTypes) == false {
-		fmt.Println("it's the ArgTypes")
+	// jesus christ there must be a better way
+	if len(a.ArgTypes) == len(b.ArgTypes) {
+		for i, v := range a.ArgTypes {
+			if v != b.ArgTypes[i] {
+				fmt.Println("it's the ArgTypes")
+				fmt.Println("it's the ArgTypes:", a.ArgTypes, "vs", b.ArgTypes)
+				return false
+			}
+		}
+	} else {
 		return false
 	}
 
-	if reflect.DeepEqual(a.ResTypes, b.ResTypes) == false {
-		fmt.Println("it's the ResTypes:", a.ResTypes, b.ResTypes)
+	if len(a.ResTypes) == len(b.ResTypes) {
+		for i, v := range a.ResTypes {
+			if v != b.ResTypes[i] {
+				fmt.Println("it's the ResTypes:", a.ResTypes, "vs", b.ResTypes)
+				return false
+			}
+		}
+	} else {
 		return false
 	}
 
@@ -194,11 +207,17 @@ func (a *Func) equal(b Func) bool {
 		return false
 	}
 
+	if a.Variadic != b.Variadic {
+		return false
+	}
+
 	return true
 }
 
 func diff(a, b map[string]Item) {
+
 	for k, v := range a {
+		fmt.Println(k)
 		switch v.Kind {
 		case "Func":
 			if v.Func.equal(b[k].Func) == false {
