@@ -6,6 +6,7 @@ import (
 	"go/types"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strings"
 
 	"golang.org/x/tools/go/loader"
@@ -127,7 +128,7 @@ func handleTypeName(t *types.TypeName) Item {
 	return item
 }
 
-func getPkgInfo(name string) map[string]Item {
+func GetPkgInfo(name string) map[string]Item {
 	var conf loader.Config
 	conf.Import(name)
 	prog, err := conf.Load()
@@ -168,6 +169,40 @@ func getPkgInfo(name string) map[string]Item {
 	return items
 }
 
+func isSameFunc(a, b Item) bool {
+	fmt.Println(a, b)
+	if reflect.DeepEqual(a.Func.ArgTypes, b.Func.ArgTypes) == false {
+		fmt.Println("it's the ArgTypes")
+		return false
+	}
+	if reflect.DeepEqual(a.Func.ResTypes, b.Func.ResTypes) == false {
+		fmt.Println("it's the ResTypes")
+		return false
+	}
+
+	return true
+}
+
+func diff(a, b map[string]Item) {
+	for k, v := range a {
+		fmt.Println(k)
+		switch v.Kind {
+		case "Func":
+			if isSameFunc(v, b[k]) == false {
+				fmt.Println(v, "and", b[k], "are different")
+			}
+		default:
+			fmt.Println("diffing type", v.Kind, "isn't supported yet")
+		}
+	}
+
+	fmt.Println("---")
+
+	for k, _ := range b {
+		fmt.Println(k)
+	}
+}
+
 func main() {
 	var pkgName string
 	if len(os.Args) >= 2 {
@@ -187,7 +222,7 @@ func main() {
 	json.Unmarshal(file, &verFile)
 	fmt.Println(verFile.Items)
 
-	items := getPkgInfo(pkgName)
+	items := GetPkgInfo(pkgName)
 
 	newVerFile := VerFile{Items: items}
 	b, err := json.MarshalIndent(newVerFile, "", "  ")
@@ -195,4 +230,6 @@ func main() {
 		fmt.Println(err)
 	}
 	fmt.Println(string(b))
+
+	diff(verFile.Items, newVerFile.Items)
 }
