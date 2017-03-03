@@ -35,6 +35,16 @@ type Struct struct {
 	Fields  map[string]Item `json:",omitempty"`
 }
 
+func (i Item) String() string {
+	return fmt.Sprintf("{Kind:%s, Type:%s, Func:%s, Struct:%s}",
+		i.Kind, i.Type, i.Func, i.Struct)
+}
+
+func (f Func) String() string {
+	return fmt.Sprintf("{ArgTypes:%s, ResTypes:%s, Variadic:%t, Recv:%s}",
+		f.ArgTypes, f.ResTypes, f.Variadic, f.Recv)
+}
+
 func typeTupleToSlice(types *types.Tuple) []string {
 	l := []string{}
 	for i := 0; i < types.Len(); i++ {
