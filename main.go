@@ -179,14 +179,18 @@ func GetPkgInfo(name string) map[string]Item {
 	return items
 }
 
-func isSameFunc(a, b Item) bool {
-	fmt.Println(a, b)
-	if reflect.DeepEqual(a.Func.ArgTypes, b.Func.ArgTypes) == false {
+func (a *Func) equal(b Func) bool {
+	if reflect.DeepEqual(a.ArgTypes, b.ArgTypes) == false {
 		fmt.Println("it's the ArgTypes")
 		return false
 	}
-	if reflect.DeepEqual(a.Func.ResTypes, b.Func.ResTypes) == false {
-		fmt.Println("it's the ResTypes")
+
+	if reflect.DeepEqual(a.ResTypes, b.ResTypes) == false {
+		fmt.Println("it's the ResTypes:", a.ResTypes, b.ResTypes)
+		return false
+	}
+
+	if a.Recv != b.Recv {
 		return false
 	}
 
@@ -195,11 +199,10 @@ func isSameFunc(a, b Item) bool {
 
 func diff(a, b map[string]Item) {
 	for k, v := range a {
-		fmt.Println(k)
 		switch v.Kind {
 		case "Func":
-			if isSameFunc(v, b[k]) == false {
-				fmt.Println(v, "and", b[k], "are different")
+			if v.Func.equal(b[k].Func) == false {
+				fmt.Println("", v, "and\n", b[k], "are different")
 			}
 		default:
 			fmt.Println("diffing type", v.Kind, "isn't supported yet")
