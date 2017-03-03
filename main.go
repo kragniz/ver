@@ -130,7 +130,6 @@ func handleTypeName(t *types.TypeName) Item {
 func getPkgInfo(name string) map[string]Item {
 	var conf loader.Config
 	conf.Import(name)
-	//conf.Import("github.com/barrucadu/logdb")
 	prog, err := conf.Load()
 	if err != nil {
 		fmt.Println(err)
