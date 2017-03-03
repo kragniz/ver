@@ -146,12 +146,6 @@ func getPkgInfo(name string) map[string]Item {
 	for _, elem := range scope.Names() {
 		obj := scope.Lookup(elem)
 
-		if len(os.Args) > 1 {
-			if obj.Name() != os.Args[1] {
-				continue
-			}
-		}
-
 		switch obj.(type) {
 		case *types.Func:
 			items[obj.Name()] = handleFunc(obj.(*types.Func))
@@ -174,6 +168,14 @@ func getPkgInfo(name string) map[string]Item {
 }
 
 func main() {
+	var pkgName string
+	if len(os.Args) >= 2 {
+		pkgName = os.Args[1]
+	} else {
+		fmt.Println("Not enough args")
+		os.Exit(1)
+	}
+
 	file, err := ioutil.ReadFile("v1.json")
 	if err != nil {
 		fmt.Printf("File error: %v\n", err)
@@ -184,7 +186,7 @@ func main() {
 	json.Unmarshal(file, &verFile)
 	fmt.Println(verFile.Items)
 
-	items := getPkgInfo("github.com/kragniz/testpkg2")
+	items := getPkgInfo(pkgName)
 
 	newVerFile := VerFile{Items: items}
 	b, err := json.MarshalIndent(newVerFile, "", "  ")
