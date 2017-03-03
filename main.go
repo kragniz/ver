@@ -146,21 +146,23 @@ func getPkgInfo(name string) map[string]Item {
 	for _, elem := range scope.Names() {
 		obj := scope.Lookup(elem)
 
-		switch obj.(type) {
-		case *types.Func:
-			items[obj.Name()] = handleFunc(obj.(*types.Func))
-		case *types.Var:
-			items[obj.Name()] = handleVar(obj.(*types.Var))
-		case *types.Const:
-			handleConst(obj.(*types.Const))
-		case *types.TypeName:
-			items[obj.Name()] = handleTypeName(obj.(*types.TypeName))
-		case *types.Label, *types.PkgName, *types.Builtin, *types.Nil:
-			// unimplemented
-			fmt.Println("Warning,", obj.Type(), "is unimplemented")
-			continue
-		default:
-			fmt.Println("not sure what it is", obj)
+		if obj.Exported() {
+			switch obj.(type) {
+			case *types.Func:
+				items[obj.Name()] = handleFunc(obj.(*types.Func))
+			case *types.Var:
+				items[obj.Name()] = handleVar(obj.(*types.Var))
+			case *types.Const:
+				handleConst(obj.(*types.Const))
+			case *types.TypeName:
+				items[obj.Name()] = handleTypeName(obj.(*types.TypeName))
+			case *types.Label, *types.PkgName, *types.Builtin, *types.Nil:
+				// unimplemented
+				fmt.Println("Warning,", obj.Type(), "is unimplemented")
+				continue
+			default:
+				fmt.Println("not sure what it is", obj)
+			}
 		}
 	}
 
