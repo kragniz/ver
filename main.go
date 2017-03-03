@@ -11,6 +11,14 @@ import (
 	"golang.org/x/tools/go/loader"
 )
 
+type RequiredBump int
+
+const (
+	Major RequiredBump = iota
+	Minor
+	Patch
+)
+
 type VerFile struct {
 	Items map[string]Item
 }
@@ -178,50 +186,63 @@ func GetPkgInfo(name string) map[string]Item {
 	return items
 }
 
-func (a *Func) equal(b Func) bool {
+func (a *Func) diff(b Func) RequiredBump {
 	// jesus christ there must be a better way
 	if len(a.ArgTypes) == len(b.ArgTypes) {
 		for i, v := range a.ArgTypes {
 			if v != b.ArgTypes[i] {
 				fmt.Println("it's the ArgTypes")
 				fmt.Println("it's the ArgTypes:", a.ArgTypes, "vs", b.ArgTypes)
-				return false
+				return Major
 			}
 		}
 	} else {
-		return false
+		return Major
 	}
 
 	if len(a.ResTypes) == len(b.ResTypes) {
 		for i, v := range a.ResTypes {
 			if v != b.ResTypes[i] {
 				fmt.Println("it's the ResTypes:", a.ResTypes, "vs", b.ResTypes)
-				return false
+				return Major
 			}
 		}
 	} else {
-		return false
+		return Major
 	}
 
 	if a.Recv != b.Recv {
-		return false
+		return Major
 	}
 
 	if a.Variadic != b.Variadic {
-		return false
+		return Major
 	}
 
-	return true
+	return Patch
+}
+
+func (a *Struct) diff(b Struct) RequiredBump {
+	return Patch
 }
 
 func diff(a, b map[string]Item) {
+	changedThings := 0
 
 	for k, v := range a {
 		fmt.Println(k)
 		switch v.Kind {
 		case "Func":
-			if v.Func.equal(b[k].Func) == false {
+			change := v.Func.diff(b[k].Func)
+			if change == Major {
 				fmt.Println("", v, "and\n", b[k], "are different")
+				changedThings += 1
+			}
+		case "Struct":
+			change := v.Struct.diff(b[k].Struct)
+			if change == Major {
+				fmt.Println("", v, "and\n", b[k], "are different")
+				changedThings += 1
 			}
 		default:
 			fmt.Println("diffing type", v.Kind, "isn't supported yet")
@@ -233,6 +254,8 @@ func diff(a, b map[string]Item) {
 	for k, _ := range b {
 		fmt.Println(k)
 	}
+
+	fmt.Println("changed things:", changedThings)
 }
 
 func main() {
