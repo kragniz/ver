@@ -16,10 +16,10 @@ type VerFile struct {
 }
 
 type Item struct {
-	ObjectType string
-	Type       string
-	Func       Func
-	Struct     Struct
+	Kind   string
+	Type   string
+	Func   Func
+	Struct Struct
 }
 
 type Func struct {
@@ -56,7 +56,7 @@ func handleFunc(f *types.Func) Item {
 	}
 
 	item := Item{
-		ObjectType: "Func",
+		Kind: "Func",
 		Func: Func{
 			ArgTypes: args,
 			ResTypes: res,
@@ -69,7 +69,7 @@ func handleFunc(f *types.Func) Item {
 
 func handleVar(v *types.Var) Item {
 	fmt.Println("Var:", v.Name(), v.Type())
-	item := Item{ObjectType: "Var", Type: v.Type().String()}
+	item := Item{Kind: "Var", Type: v.Type().String()}
 	return item
 }
 
@@ -94,8 +94,8 @@ func handleStruct(t *types.TypeName) Item {
 		methods[f.Name()] = handleFunc(f)
 	}
 	return Item{
-		ObjectType: "Struct",
-		Type:       t.Type().String(),
+		Kind: "Struct",
+		Type: t.Type().String(),
 		Struct: Struct{
 			Fields:  fields,
 			Methods: methods,
@@ -107,7 +107,7 @@ func handleInterface(t *types.TypeName) Item {
 	i := t.Type().Underlying().(*types.Interface)
 	fmt.Println(i)
 
-	return Item{ObjectType: "Interface"}
+	return Item{Kind: "Interface"}
 }
 
 func handleTypeName(t *types.TypeName) Item {
