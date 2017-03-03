@@ -231,6 +231,30 @@ func (a *Item) varDiff(b Item) RequiredBump {
 }
 
 func (a *Struct) diff(b Struct) RequiredBump {
+	// check if an existing field has changed
+	for name, item := range a.Fields {
+		if item.varDiff(b.Fields[name]) == Major {
+			return Major
+		}
+	}
+
+	// check if there are new fields
+	if len(a.Fields) != len(b.Fields) {
+		return Minor
+	}
+
+	// check if an existing method has changed
+	for name, item := range a.Methods {
+		if item.Func.diff(b.Methods[name].Func) == Major {
+			return Major
+		}
+	}
+
+	// check if there are new methods
+	if len(a.Methods) != len(b.Methods) {
+		return Minor
+	}
+
 	return Patch
 }
 
@@ -251,6 +275,10 @@ func diff(a, b map[string]Item) {
 			if change == Major {
 				fmt.Println("", v, "and\n", b[k], "are different")
 				changedThings += 1
+			}
+
+			if change == Minor {
+				fmt.Println("minor change to", v)
 			}
 		default:
 			fmt.Println("diffing type", v.Kind, "isn't supported yet")
