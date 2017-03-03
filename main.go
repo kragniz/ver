@@ -187,28 +187,29 @@ func GetPkgInfo(name string) map[string]Item {
 }
 
 func (a *Func) diff(b Func) RequiredBump {
-	// jesus christ there must be a better way
-	if len(a.ArgTypes) == len(b.ArgTypes) {
-		for i, v := range a.ArgTypes {
-			if v != b.ArgTypes[i] {
-				fmt.Println("it's the ArgTypes")
-				fmt.Println("it's the ArgTypes:", a.ArgTypes, "vs", b.ArgTypes)
-				return Major
-			}
-		}
-	} else {
+	if len(a.ArgTypes) != len(b.ArgTypes) {
 		return Major
 	}
 
-	if len(a.ResTypes) == len(b.ResTypes) {
-		for i, v := range a.ResTypes {
-			if v != b.ResTypes[i] {
-				fmt.Println("it's the ResTypes:", a.ResTypes, "vs", b.ResTypes)
-				return Major
-			}
+	// check that all the arg types remain the same
+	for i, v := range a.ArgTypes {
+		if v != b.ArgTypes[i] {
+			fmt.Println("it's the ArgTypes")
+			fmt.Println("it's the ArgTypes:", a.ArgTypes, "vs", b.ArgTypes)
+			return Major
 		}
-	} else {
+	}
+
+	if len(a.ResTypes) != len(b.ResTypes) {
 		return Major
+	}
+
+	// check that all the return types remain the same
+	for i, v := range a.ResTypes {
+		if v != b.ResTypes[i] {
+			fmt.Println("it's the ResTypes:", a.ResTypes, "vs", b.ResTypes)
+			return Major
+		}
 	}
 
 	if a.Recv != b.Recv {
