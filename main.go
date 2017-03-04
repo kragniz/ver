@@ -297,14 +297,16 @@ func diff(a, b map[string]Item) {
 
 func main() {
 	var pkgName string
-	if len(os.Args) >= 2 {
+	var diffFileName string
+	if len(os.Args) >= 3 {
 		pkgName = os.Args[1]
+		diffFileName = os.Args[2]
 	} else {
-		fmt.Println("Not enough args")
+		fmt.Println("Usage: ver <package name> <definition filename>")
 		os.Exit(1)
 	}
 
-	file, err := ioutil.ReadFile("v1.json")
+	file, err := ioutil.ReadFile(diffFileName)
 	if err != nil {
 		fmt.Printf("File error: %v\n", err)
 		os.Exit(1)
