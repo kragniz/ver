@@ -14,9 +14,9 @@ import (
 type RequiredBump int
 
 const (
-	Major RequiredBump = iota
+	Patch RequiredBump = iota
 	Minor
-	Patch
+	Major
 )
 
 type VerFile struct {
@@ -52,6 +52,12 @@ func (p RequiredBump) String() string {
 		return "Patch"
 	default:
 		return fmt.Sprintf("%s", p)
+	}
+}
+
+func (p *RequiredBump) add(b RequiredBump) {
+	if b > *p {
+		*p = b
 	}
 }
 
@@ -272,28 +278,18 @@ func (a *Struct) diff(b Struct) RequiredBump {
 	return Patch
 }
 
-func diff(a, b map[string]Item) {
-	changedThings := 0
+func diff(a, b map[string]Item) RequiredBump {
+	bump := Patch
 
 	for k, v := range a {
 		fmt.Println(k)
 		switch v.Kind {
 		case "Func":
 			change := v.Func.diff(b[k].Func)
-			if change == Major {
-				fmt.Println("", v, "and\n", b[k], "are different")
-				changedThings += 1
-			}
+			bump.add(change)
 		case "Struct":
 			change := v.Struct.diff(b[k].Struct)
-			if change == Major {
-				fmt.Println("", v, "and\n", b[k], "are different")
-				changedThings += 1
-			}
-
-			if change == Minor {
-				fmt.Println("minor change to", v)
-			}
+			bump.add(change)
 		default:
 			fmt.Println("diffing type", v.Kind, "isn't supported yet")
 		}
@@ -305,7 +301,7 @@ func diff(a, b map[string]Item) {
 		fmt.Println(k)
 	}
 
-	fmt.Println("changed things:", changedThings)
+	return bump
 }
 
 func main() {
@@ -338,5 +334,6 @@ func main() {
 	}
 	fmt.Println(string(b))
 
-	diff(verFile.Items, newVerFile.Items)
+	bump := diff(verFile.Items, newVerFile.Items)
+	fmt.Println("Required bump:", bump)
 }
