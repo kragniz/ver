@@ -42,6 +42,19 @@ type Struct struct {
 	Fields  map[string]Item `json:",omitempty"`
 }
 
+func (p RequiredBump) String() string {
+	switch p {
+	case Major:
+		return "Major"
+	case Minor:
+		return "Minor"
+	case Patch:
+		return "Patch"
+	default:
+		return fmt.Sprintf("%s", p)
+	}
+}
+
 func (i Item) String() string {
 	return fmt.Sprintf("{Kind:%s, Type:%s, Func:%s, Struct:%s}",
 		i.Kind, i.Type, i.Func, i.Struct)
