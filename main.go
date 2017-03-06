@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Masterminds/semver"
 	"golang.org/x/tools/go/loader"
 )
 
@@ -20,7 +21,8 @@ const (
 )
 
 type VerFile struct {
-	Items map[string]Item
+	Version string
+	Items   map[string]Item
 }
 
 type Item struct {
@@ -306,6 +308,29 @@ func diff(a, b map[string]Item) RequiredBump {
 	return bump
 }
 
+func inc(v *semver.Version, r RequiredBump) *semver.Version {
+	var v2 semver.Version
+
+	switch r {
+	case Patch:
+		v2 = v.IncPatch()
+	case Minor:
+		v2 = v.IncMinor()
+	case Major:
+		// only bump major if we're > 1.0.0
+		v1, _ := semver.NewVersion("1.0.0")
+		if v.LessThan(v1) {
+			v2 = v.IncMinor()
+		} else {
+			v2 = v.IncMajor()
+		}
+	default:
+		panic("Unknown bump type")
+	}
+
+	return &v2
+}
+
 func main() {
 	var pkgName string
 	var diffFileName string
@@ -327,6 +352,9 @@ func main() {
 	json.Unmarshal(file, &verFile)
 	fmt.Println(verFile.Items)
 
+	v, err := semver.NewVersion(verFile.Version)
+	fmt.Println(v)
+
 	items := GetPkgInfo(pkgName)
 
 	newVerFile := VerFile{Items: items}
@@ -337,5 +365,6 @@ func main() {
 	fmt.Println(string(b))
 
 	bump := diff(verFile.Items, newVerFile.Items)
-	fmt.Println("Required bump:", bump)
+	newVer := inc(v, bump)
+	fmt.Println("Required bump:", bump, "New version:", newVer)
 }
