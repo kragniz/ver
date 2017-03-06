@@ -110,8 +110,10 @@ func handleVar(v *types.Var) Item {
 	return item
 }
 
-func handleConst(c *types.Const) {
+func handleConst(c *types.Const) Item {
 	fmt.Println("Const:", c.Name())
+	item := Item{Kind: "Const", Type: c.Type().String()}
+	return item
 }
 
 func handleStruct(t *types.TypeName) Item {
@@ -189,7 +191,7 @@ func GetPkgInfo(name string) map[string]Item {
 			case *types.Var:
 				items[obj.Name()] = handleVar(obj.(*types.Var))
 			case *types.Const:
-				handleConst(obj.(*types.Const))
+				items[obj.Name()] = handleConst(obj.(*types.Const))
 			case *types.TypeName:
 				items[obj.Name()] = handleTypeName(obj.(*types.TypeName))
 			case *types.Label, *types.PkgName, *types.Builtin, *types.Nil:
