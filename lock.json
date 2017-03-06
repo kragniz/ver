@@ -1,0 +1,23 @@
+{
+    "memo": "2cdf0e83ad482ccba7c3991a440a8378681dbb34f254bbfac6f36de81572977a",
+    "projects": [
+        {
+            "name": "github.com/Masterminds/semver",
+            "branch": "2.x",
+            "revision": "0ae288cd4588a4cf5ae3d38a0653d6ac4c342322",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "golang.org/x/tools",
+            "branch": "master",
+            "revision": "9e7459099f9afd6a15464d69d93c6eed49bb545d",
+            "packages": [
+                "go/ast/astutil",
+                "go/buildutil",
+                "go/loader"
+            ]
+        }
+    ]
+}

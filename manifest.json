@@ -1,0 +1,7 @@
+{
+    "dependencies": {
+        "github.com/Masterminds/semver": {
+            "branch": "2.x"
+        }
+    }
+}
