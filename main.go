@@ -26,10 +26,11 @@ type VerFile struct {
 }
 
 type Item struct {
-	Kind   string
-	Type   string
-	Func   Func
-	Struct Struct
+	Kind      string
+	Type      string
+	Func      Func
+	Struct    Struct
+	Interface Interface
 }
 
 type Func struct {
@@ -42,6 +43,10 @@ type Func struct {
 type Struct struct {
 	Methods map[string]Item `json:",omitempty"`
 	Fields  map[string]Item `json:",omitempty"`
+}
+
+type Interface struct {
+	Funcs map[string]Item `json:",omitempty"`
 }
 
 func (p RequiredBump) String() string {
@@ -148,7 +153,17 @@ func handleInterface(t *types.TypeName) Item {
 	i := t.Type().Underlying().(*types.Interface)
 	fmt.Println(i)
 
-	return Item{Kind: "Interface"}
+	funcs := make(map[string]Item)
+	for j := 0; j < i.NumMethods(); j++ {
+		f := i.Method(j)
+		fmt.Println(f)
+		funcs[f.Name()] = handleFunc(f)
+	}
+
+	return Item{
+		Kind:      "Interface",
+		Interface: Interface{Funcs: funcs},
+	}
 }
 
 func handleTypeName(t *types.TypeName) Item {
@@ -282,6 +297,16 @@ func (a *Struct) diff(b Struct) RequiredBump {
 	return Patch
 }
 
+func (a *Interface) diff(b Interface) RequiredBump {
+	for name, item := range a.Funcs {
+		if item.Func.diff(b.Funcs[name].Func) == Major {
+			fmt.Println("interface difference:", item.Func, "vs", b.Funcs[name].Func)
+			return Major
+		}
+	}
+	return Patch
+}
+
 func diff(a, b map[string]Item) RequiredBump {
 	bump := Patch
 
@@ -293,6 +318,9 @@ func diff(a, b map[string]Item) RequiredBump {
 			bump.add(change)
 		case "Struct":
 			change := v.Struct.diff(b[k].Struct)
+			bump.add(change)
+		case "Interface":
+			change := v.Interface.diff(b[k].Interface)
 			bump.add(change)
 		default:
 			fmt.Println("diffing type", v.Kind, "isn't supported yet")
@@ -353,6 +381,9 @@ func main() {
 	fmt.Println(verFile.Items)
 
 	v, err := semver.NewVersion(verFile.Version)
+	if err != nil {
+		fmt.Printf("File error: %v\n", err)
+	}
 	fmt.Println(v)
 
 	items := GetPkgInfo(pkgName)
