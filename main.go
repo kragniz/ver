@@ -389,13 +389,15 @@ func main() {
 	items := GetPkgInfo(pkgName)
 
 	newVerFile := VerFile{Items: items}
+
+	bump := diff(verFile.Items, newVerFile.Items)
+	newVer := inc(v, bump)
+	fmt.Println("Required bump:", bump, "New version:", newVer)
+
+	newVerFile.Version = newVer.String()
 	b, err := json.MarshalIndent(newVerFile, "", "  ")
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println(string(b))
-
-	bump := diff(verFile.Items, newVerFile.Items)
-	newVer := inc(v, bump)
-	fmt.Println("Required bump:", bump, "New version:", newVer)
 }
